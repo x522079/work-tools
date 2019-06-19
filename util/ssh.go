@@ -3,7 +3,6 @@ package util
 import (
 	"bufio"
 	"cmds/middleware"
-	"fmt"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 	"io/ioutil"
@@ -84,7 +83,6 @@ func (c *Client) getHostKey() ssh.PublicKey {
 		}
 
 		if strings.Contains(fileds[0], middleware.HostsConfig[c.HostAlias]["host"].(string)) {
-			fmt.Println(scanner.Text())
 			hostKey, _, _, _, err = ssh.ParseAuthorizedKey(scanner.Bytes())
 			CheckError(err)
 			break

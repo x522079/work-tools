@@ -14,12 +14,14 @@ func init() {
 	flag.StringVar(&commmand.SubCmd, "sub", "", "要执行的子命令")
 	flag.StringVar(&commmand.Path, "path", "", "要添加的目录")
 	flag.StringVar(&commmand.RemoteAlias, "remote", "", "远程服务器别名")
-	rpath := flag.String("rpath", "", "远程服务器路径")
+	var rpath = flag.String("rpath", "~", "远程服务器路径")
+	flag.Parse()
 	if strings.Contains(*rpath, "~") {
 		*rpath = strings.Replace(*rpath, "~", "/root", 1)
 	}
 	commmand.RemotePath = *rpath
 }
+
 func main() {
 	defer func() {
 		if r := recover(); r != nil {
@@ -28,7 +30,6 @@ func main() {
 		}
 	}()
 
-	flag.Parse()
 	cmds.NewDispacher(commmand)
 	cmds.Dispatcher.Dispach()
 }

@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type Scp struct {
@@ -47,7 +48,6 @@ func (s *Scp) List() []string {
 	for _, v := range res {
 		one := string(v.([]byte))
 		list = append(list, one)
-		fmt.Println(one)
 	}
 
 	return list
@@ -128,23 +128,56 @@ func (s *Scp) Execute() bool {
 	localClient.Pass = HostConfig["pass"].(string)
 	localClient.KeyPath = HostConfig["keyPath"].(string)
 	sftpClient := localClient.NewSftpClient()
+	g := sync.WaitGroup{}
 	for _, v := range paths {
-		fmt.Println(v)
-		file, err := os.Open(v)
-		util.CheckError(err)
-		defer file.Close()
+		g.Add(1)
+		go func(v string) {
+			defer g.Done()
+			one := make([]string, 10)
+			one = append(one, v)
+			info, err := os.Stat(v)
+			util.CheckError(err)
 
-		fullRemotePath := Dispatcher.Cmd.RemotePath + filepath.Base(file.Name())
-		fmt.Println(fullRemotePath)
-		remote, err := sftpClient.Create(fullRemotePath)
-		util.CheckError(err)
-		defer remote.Close()
+			if info.IsDir() {
+				_ = filepath.Walk(v, func(path string, info os.FileInfo, err error) error {
+					if info.IsDir() {
+						return nil
+					}
+					one = append(one, path)
+					return nil
+				})
+			}
 
-		data, err := ioutil.ReadAll(file)
-		util.CheckError(err)
-		_, err = remote.Write(data)
-		util.CheckError(err)
+			gSub := sync.WaitGroup{}
+			for _, vv := range one {
+				gSub.Add(1)
+				go func(vv string) {
+					defer gSub.Done()
+
+					file, err := os.Open(vv)
+					if err != nil {
+						return
+					}
+					defer file.Close()
+
+					fullRemotePath := strings.TrimRight(Dispatcher.Cmd.RemotePath, "/") + "/" + filepath.Base(file.Name())
+					remote, err := sftpClient.Create(fullRemotePath)
+					util.CheckError(err)
+					defer remote.Close()
+
+					data, err := ioutil.ReadAll(file)
+					util.CheckError(err)
+					_, err = remote.Write(data)
+					util.CheckError(err)
+					fmt.Println(v, " >>> ", HostConfig["host"].(string)+"::"+fullRemotePath, " [ OK ]")
+				}(vv)
+			}
+
+			gSub.Wait()
+		}(v)
 	}
+
+	g.Wait()
 
 	return true
 }
