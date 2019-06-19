@@ -1,10 +1,13 @@
 package cmds
 
 import (
+	"cmds/middleware"
 	"cmds/util"
 	"fmt"
 	"github.com/gomodule/redigo/redis"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -20,7 +23,7 @@ func (s *Scp) Add() {
 	}
 
 	fmt.Println(getKey())
-	res, err := redis.Int(util.Conn.Do("sadd", getKey(), Dispatcher.Cmd.Path))
+	res, err := redis.Int(middleware.Conn.Do("sadd", getKey(), Dispatcher.Cmd.Path))
 	if err != nil {
 		panic(err)
 	}
@@ -35,7 +38,7 @@ func (s *Scp) Add() {
 // 列出所有路径
 func (s *Scp) List() []string {
 	key := getKey()
-	res, err := redis.Values(util.Conn.Do("smembers", key))
+	res, err := redis.Values(middleware.Conn.Do("smembers", key))
 	if err != nil {
 		panic(err)
 	}
@@ -52,7 +55,7 @@ func (s *Scp) List() []string {
 
 // 清空缓存
 func (s *Scp) Clear() {
-	res, err := redis.Int(util.Conn.Do("del", getKey()))
+	res, err := redis.Int(middleware.Conn.Do("del", getKey()))
 	if err != nil {
 		panic(err)
 	}
@@ -63,7 +66,7 @@ func (s *Scp) Clear() {
 	fmt.Println(res)
 }
 
-func (s *Scp) Execute() bool {
+/*func (s *Scp) Execute() bool {
 	paths := s.List()
 	if len(paths) == 0 {
 		fmt.Println("缓存为空，无需上传")
@@ -71,6 +74,10 @@ func (s *Scp) Execute() bool {
 
 	localClient := util.Client{}
 	localClient.SetAlias(Dispatcher.Cmd.RemoteAlias)
+	localClient.Port = int(HostConfig["port"].(float64))
+	localClient.User = HostConfig["user"].(string)
+	localClient.Pass = HostConfig["pass"].(string)
+	localClient.KeyPath = HostConfig["keyPath"].(string)
 	client := localClient.NewClient()
 	defer client.Close()
 	session, err := client.NewSession()
@@ -85,24 +92,60 @@ func (s *Scp) Execute() bool {
 			panic(err)
 		}
 
-		fullRemotePath := localClient.GetFullHostPath() + ":" + Dispatcher.Cmd.RemotePath
+		fullRemotePath := localClient.GetFullHostPath(false) + ":" + Dispatcher.Cmd.RemotePath
+		fmt.Println(fullRemotePath)
 		cmd := ""
 		if info.IsDir() {
-			cmd = "scp -r " + v + " " + fullRemotePath
+			cmd = "scp -r " + v + " root@" + fullRemotePath
 		} else {
-			cmd = "scp " + v + " " + fullRemotePath
+			cmd = "scp " + v + " root@" + fullRemotePath
 		}
 
 		if cmd == "" {
 			continue
 		}
+
 		res, err := session.CombinedOutput(cmd)
 		if err != nil {
 			fmt.Println(err)
+			fmt.Println(string(res))
 			continue
 		}
-		fmt.Println(res)
+		fmt.Println(string(res))
 	}
+	return true
+}*/
+func (s *Scp) Execute() bool {
+	paths := s.List()
+	if len(paths) == 0 {
+		fmt.Println("缓存为空，无需上传")
+	}
+
+	localClient := util.Client{}
+	localClient.SetAlias(Dispatcher.Cmd.RemoteAlias)
+	localClient.Port = int(HostConfig["port"].(float64))
+	localClient.User = HostConfig["user"].(string)
+	localClient.Pass = HostConfig["pass"].(string)
+	localClient.KeyPath = HostConfig["keyPath"].(string)
+	sftpClient := localClient.NewSftpClient()
+	for _, v := range paths {
+		fmt.Println(v)
+		file, err := os.Open(v)
+		util.CheckError(err)
+		defer file.Close()
+
+		fullRemotePath := Dispatcher.Cmd.RemotePath + filepath.Base(file.Name())
+		fmt.Println(fullRemotePath)
+		remote, err := sftpClient.Create(fullRemotePath)
+		util.CheckError(err)
+		defer remote.Close()
+
+		data, err := ioutil.ReadAll(file)
+		util.CheckError(err)
+		_, err = remote.Write(data)
+		util.CheckError(err)
+	}
+
 	return true
 }
 

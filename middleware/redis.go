@@ -1,4 +1,4 @@
-package util
+package middleware
 
 import (
 	"github.com/gomodule/redigo/redis"

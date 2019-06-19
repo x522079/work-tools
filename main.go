@@ -4,6 +4,7 @@ import (
 	"cmds/cmds"
 	"flag"
 	"fmt"
+	"strings"
 )
 
 var commmand cmds.Commands
@@ -13,7 +14,11 @@ func init() {
 	flag.StringVar(&commmand.SubCmd, "sub", "", "要执行的子命令")
 	flag.StringVar(&commmand.Path, "path", "", "要添加的目录")
 	flag.StringVar(&commmand.RemoteAlias, "remote", "", "远程服务器别名")
-	flag.StringVar(&commmand.RemotePath, "rpath", "", "远程服务器路径")
+	rpath := flag.String("rpath", "", "远程服务器路径")
+	if strings.Contains(*rpath, "~") {
+		*rpath = strings.Replace(*rpath, "~", "/root", 1)
+	}
+	commmand.RemotePath = *rpath
 }
 func main() {
 	defer func() {

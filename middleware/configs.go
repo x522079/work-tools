@@ -1,4 +1,4 @@
-package util
+package middleware
 
 import (
 	"encoding/json"
@@ -10,15 +10,16 @@ type Config struct {
 	section string
 }
 
-var configFile []byte
+var ConfigFile []byte
 var RedisConfigs RedisConfig
 var HostsConfig = make(map[string]map[string]interface{})
 
 func init() {
-	configFile, err = ioutil.ReadFile("config/Cmd.json")
+	config, err := ioutil.ReadFile("config/cmd.json")
 	if err != nil {
 		panic(err)
 	}
+	ConfigFile = config
 
 	LoadConfig()
 	LoadRedis(RedisConfigs.host, RedisConfigs.pass, RedisConfigs.port)
@@ -32,7 +33,7 @@ type RedisConfig struct {
 
 func LoadConfig() bool {
 	configs := Configs{}
-	err = json.Unmarshal(configFile, &configs)
+	err := json.Unmarshal(ConfigFile, &configs)
 	if err != nil {
 		panic(err)
 	}

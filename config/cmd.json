@@ -2,8 +2,10 @@
   "hosts": {
     "yangpingxin": {
       "host": "118.190.199.119",
+      "port": 22,
       "user": "root",
-      "pass": "Xin311311"
+      "pass": "Xin311311",
+      "keyPath": "/Users/xin/.ssh/id_rsa.pub"
     }
   },
   "redis": {

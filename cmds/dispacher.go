@@ -1,6 +1,8 @@
 package cmds
 
 import (
+	"cmds/middleware"
+	_ "cmds/middleware"
 	"math/rand"
 )
 
@@ -18,11 +20,17 @@ type Dispacher struct {
 	Cmd Commands
 }
 
+var (
+	HostConfig map[string]interface{}
+)
+
 func NewDispacher(cmds Commands) {
 	Dispatcher = &Dispacher{Uid: rand.Int(), Cmd: cmds}
 }
 
 func (d *Dispacher) Dispach() {
+	HostConfig = middleware.HostsConfig[d.Cmd.RemoteAlias]
+
 	switch d.Cmd.Cmd {
 	case "scp":
 		(&Scp{}).SubDispatch()
