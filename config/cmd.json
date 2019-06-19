@@ -1,0 +1,14 @@
+{
+  "hosts": {
+    "yangpingxin": {
+      "host": "118.190.199.119",
+      "user": "root",
+      "pass": "Xin311311"
+    }
+  },
+  "redis": {
+    "host": "localhost",
+    "port": 6379,
+    "pass": ""
+  }
+}
