@@ -2,7 +2,6 @@ package cmds
 
 import (
 	"cmds/middleware"
-	_ "cmds/middleware"
 	"math/rand"
 )
 
@@ -22,10 +21,12 @@ type Dispacher struct {
 
 var (
 	HostConfig map[string]interface{}
+	Dispatcher *Dispacher
 )
 
-func NewDispacher(cmds Commands) {
+func NewDispacher(cmds Commands) *Dispacher {
 	Dispatcher = &Dispacher{Uid: rand.Int(), Cmd: cmds}
+	return Dispatcher
 }
 
 func (d *Dispacher) Dispach() {

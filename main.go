@@ -2,6 +2,8 @@ package main
 
 import (
 	"cmds/cmds"
+	"cmds/middleware"
+	"cmds/util"
 	"flag"
 	"fmt"
 	"strings"
@@ -29,6 +31,10 @@ func main() {
 			return
 		}
 	}()
+
+	configs := middleware.Configs{}
+	configs.SetRedisUtil(util.RedisUtil{})
+	configs.LoadConfig()
 
 	cmds.NewDispacher(commmand)
 	cmds.Dispatcher.Dispach()

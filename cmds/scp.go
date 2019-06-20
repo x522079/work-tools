@@ -1,7 +1,6 @@
 package cmds
 
 import (
-	"cmds/middleware"
 	"cmds/util"
 	"fmt"
 	"github.com/gomodule/redigo/redis"
@@ -24,7 +23,7 @@ func (s *Scp) Add() {
 	}
 
 	fmt.Println(getKey())
-	res, err := redis.Int(middleware.Conn.Do("sadd", getKey(), Dispatcher.Cmd.Path))
+	res, err := redis.Int(util.Conn.Do("sadd", getKey(), Dispatcher.Cmd.Path))
 	if err != nil {
 		panic(err)
 	}
@@ -39,7 +38,7 @@ func (s *Scp) Add() {
 // 列出所有路径
 func (s *Scp) List() []string {
 	key := getKey()
-	res, err := redis.Values(middleware.Conn.Do("smembers", key))
+	res, err := redis.Values(util.Conn.Do("smembers", key))
 	if err != nil {
 		panic(err)
 	}
@@ -55,7 +54,7 @@ func (s *Scp) List() []string {
 
 // 清空缓存
 func (s *Scp) Clear() {
-	res, err := redis.Int(middleware.Conn.Do("del", getKey()))
+	res, err := redis.Int(util.Conn.Do("del", getKey()))
 	if err != nil {
 		panic(err)
 	}

@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"cmds/resolve"
 	"encoding/json"
 	"io/ioutil"
 )
@@ -13,17 +14,7 @@ type Config struct {
 var ConfigFile []byte
 var RedisConfigs RedisConfig
 var HostsConfig = make(map[string]map[string]interface{})
-
-func init() {
-	config, err := ioutil.ReadFile("config/cmd.json")
-	if err != nil {
-		panic(err)
-	}
-	ConfigFile = config
-
-	LoadConfig()
-	LoadRedis(RedisConfigs.host, RedisConfigs.pass, RedisConfigs.port)
-}
+var RedisUtil resolve.Redis
 
 type RedisConfig struct {
 	host string
@@ -31,7 +22,15 @@ type RedisConfig struct {
 	pass string
 }
 
-func LoadConfig() bool {
+func init() {
+	config, err := ioutil.ReadFile("config/cmd.json")
+	if err != nil {
+		panic(err)
+	}
+	ConfigFile = config
+}
+
+func (c *Configs) LoadConfig() bool {
 	configs := Configs{}
 	err := json.Unmarshal(ConfigFile, &configs)
 	if err != nil {
@@ -50,5 +49,11 @@ func LoadConfig() bool {
 		HostsConfig[k] = v.(map[string]interface{})
 	}
 
+	RedisUtil.LoadRedis(RedisConfigs.host, RedisConfigs.pass, RedisConfigs.port)
+
 	return true
+}
+
+func (c *Configs) SetRedisUtil(ru resolve.Redis) {
+	RedisUtil = ru
 }
