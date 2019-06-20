@@ -4,6 +4,8 @@ import (
 	"cmds/resolve"
 	"encoding/json"
 	"io/ioutil"
+	"os"
+	"strings"
 )
 
 type Configs map[string]interface{}
@@ -15,6 +17,7 @@ var ConfigFile []byte
 var RedisConfigs RedisConfig
 var HostsConfig = make(map[string]map[string]interface{})
 var RedisUtil resolve.Redis
+var RootDir string
 
 type RedisConfig struct {
 	host string
@@ -23,7 +26,8 @@ type RedisConfig struct {
 }
 
 func init() {
-	config, err := ioutil.ReadFile("config/cmd.json")
+	RootDir = os.Getenv("GO_CMD_DIR")
+	config, err := ioutil.ReadFile(strings.TrimRight(RootDir, "/") + "/config/cmd.json")
 	if err != nil {
 		panic(err)
 	}

@@ -46,6 +46,7 @@ func (s *Scp) List() []string {
 	var list []string
 	for _, v := range res {
 		one := string(v.([]byte))
+		fmt.Println(one)
 		list = append(list, one)
 	}
 
